@@ -16,7 +16,7 @@ type Position struct {
 	Col  int
 }
 
-type varible struct {
+type variable struct {
 	location *ir.InstAlloca
 	value    float64
 }
@@ -25,7 +25,7 @@ type varible struct {
 type Lexer struct {
 	rootAst    Ast
 	pos        Position
-	variables  map[string]varible
+	variables  map[string]variable
 	evalFailed bool
 	reader     *bufio.Reader
 	errors     []Diagnostic
@@ -36,7 +36,7 @@ type Lexer struct {
 func NewLexer(reader io.Reader) *Lexer {
 	return &Lexer{
 		pos:       Position{Line: 1, Col: 0},
-		variables: make(map[string]varible),
+		variables: make(map[string]variable),
 		rootAst:   nil,
 		reader:    bufio.NewReader(reader),
 	}

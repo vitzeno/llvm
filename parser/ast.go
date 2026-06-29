@@ -271,7 +271,7 @@ func (l *Lexer) evalAssignment(e *Assignment) (float64, error) {
 	}
 
 	if !l.evalFailed {
-		l.variables[e.Variable] = varible{location: nil, value: result}
+		l.variables[e.Variable] = variable{location: nil, value: result}
 	}
 	return result, nil
 }
@@ -289,7 +289,7 @@ func (l *Lexer) evalReassignment(e *Reassignment) (float64, error) {
 	}
 
 	if !l.evalFailed {
-		l.variables[e.Variable] = varible{location: l.variables[e.Variable].location, value: result}
+		l.variables[e.Variable] = variable{location: l.variables[e.Variable].location, value: result}
 	}
 	return result, nil
 }
