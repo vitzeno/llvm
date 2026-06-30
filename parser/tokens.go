@@ -11,7 +11,6 @@ const (
 	tokenAssign     = ASSIGN     // assignment operator
 	tokenLet        = LET        // let keyword
 	tokenIf         = IF         // if keyword
-	tokenThen       = THEN       // then keyword
 	tokenElse       = ELSE       // else keyword
 	tokenGt         = GT         // >
 	tokenLt         = LT         // <

@@ -8,7 +8,7 @@ String string
 Ast Ast 
 }
 
-%token<String> NUMBER IDENTIFIER SEPARATOR ASSIGN LET IF THEN LT LTE GT GTE EQ NE OR AND ELSE WHILE PRINT
+%token<String> NUMBER IDENTIFIER SEPARATOR ASSIGN LET IF LT LTE GT GTE EQ NE OR AND ELSE WHILE PRINT
 
 %type <Ast> statements statement expression assignment reassignment print control_flow while_statement
 

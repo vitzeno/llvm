@@ -76,24 +76,6 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 			l.resetPosition()
 		case ';':
 			return tokenSeparator
-		// case '<':
-		// // potential issues cause by rune over-scanning and backup
-		// 	nextRune, _, _ := l.reader.ReadRune()
-		// 	if nextRune == '=' {
-		// 		fmt.Println("less than or equal")
-		// 		return tokenLte
-		// 	}
-		// 	l.backup()
-		// 	fmt.Println("less than")
-		// 	return tokenLt
-		// case '>':
-		// // potential issues cause by rune over-scanning and backup
-		// 	nextRune, _, _ := l.reader.ReadRune()
-		// 	if nextRune == '=' {
-		// 		return tokenGte
-		// 	}
-		// 	l.backup()
-		// 	return tokenGt
 		default:
 			if unicode.IsSpace(r) {
 				continue
@@ -118,9 +100,6 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 				case "if":
 					lval.String = lit
 					return tokenIf
-				case "then":
-					lval.String = lit
-					return tokenThen
 				case "else":
 					lval.String = lit
 					return tokenElse
