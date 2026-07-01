@@ -76,6 +76,28 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 			l.resetPosition()
 		case ';':
 			return tokenSeparator
+		case '&':
+			next, _, err := l.reader.ReadRune()
+			if err == nil && next == '&' {
+				l.pos.Col++
+				lval.String = "&&"
+				return tokenAnd
+			}
+			if err == nil {
+				l.backup()
+			}
+			l.Error("unexpected character '&'")
+		case '!':
+			next, _, err := l.reader.ReadRune()
+			if err == nil && next == '=' {
+				l.pos.Col++
+				lval.String = "!="
+				return tokenNe
+			}
+			if err == nil {
+				l.backup()
+			}
+			l.Error("unexpected character '!'")
 		default:
 			if unicode.IsSpace(r) {
 				continue
@@ -136,9 +158,20 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 				case ">":
 					lval.String = symbol
 					return tokenGt
+				case "<=":
+					lval.String = symbol
+					return tokenLte
+				case ">=":
+					lval.String = symbol
+					return tokenGte
 				case "==":
 					lval.String = symbol
 					return tokenEq
+				case "||":
+					lval.String = symbol
+					return tokenOr
+				default:
+					l.Error(fmt.Sprintf("unexpected operator %q", symbol))
 				}
 			} else {
 				return int(r)
