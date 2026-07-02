@@ -9,6 +9,7 @@ Ast Ast
 }
 
 %token<String> NUMBER IDENTIFIER SEPARATOR ASSIGN LET IF LT LTE GT GTE EQ NE OR AND ELSE WHILE PRINT
+%token FUNC RETURN TYPE_INT TYPE_DOUBLE TYPE_BOOL TYPE_VOID TRUE FALSE
 
 %type <Ast> statements statement expression assignment reassignment print control_flow while_statement
 

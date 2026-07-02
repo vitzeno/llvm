@@ -31,8 +31,16 @@ const AND = 57359
 const ELSE = 57360
 const WHILE = 57361
 const PRINT = 57362
-const NO_ELSE = 57363
-const UMINUS = 57364
+const FUNC = 57363
+const RETURN = 57364
+const TYPE_INT = 57365
+const TYPE_DOUBLE = 57366
+const TYPE_BOOL = 57367
+const TYPE_VOID = 57368
+const TRUE = 57369
+const FALSE = 57370
+const NO_ELSE = 57371
+const UMINUS = 57372
 
 var YYToknames = [...]string{
 	"$end",
@@ -55,6 +63,14 @@ var YYToknames = [...]string{
 	"ELSE",
 	"WHILE",
 	"PRINT",
+	"FUNC",
+	"RETURN",
+	"TYPE_INT",
+	"TYPE_DOUBLE",
+	"TYPE_BOOL",
+	"TYPE_VOID",
+	"TRUE",
+	"FALSE",
 	"NO_ELSE",
 	"'+'",
 	"'-'",
@@ -73,7 +89,7 @@ const YYEofCode = 1
 const YYErrCode = 2
 const YYInitialStackSize = 16
 
-//line parser/grammar.y:84
+//line parser/grammar.y:85
 
 //line yacctab:1
 var YYExca = [...]int8{
@@ -84,42 +100,43 @@ var YYExca = [...]int8{
 
 const YYPrivate = 57344
 
-const YYLast = 172
+const YYLast = 187
 
 var YYAct = [...]int8{
-	65, 3, 74, 22, 24, 23, 25, 26, 27, 28,
-	29, 70, 68, 34, 36, 18, 19, 20, 21, 72,
+	65, 3, 74, 70, 68, 9, 35, 72, 64, 63,
+	40, 39, 38, 34, 36, 18, 19, 20, 21, 55,
 	41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-	51, 52, 64, 63, 40, 53, 18, 19, 20, 21,
-	56, 57, 58, 9, 35, 39, 22, 24, 23, 25,
-	26, 27, 28, 29, 38, 20, 21, 59, 18, 19,
-	20, 21, 12, 71, 62, 67, 11, 69, 55, 33,
-	1, 32, 31, 73, 22, 24, 23, 25, 26, 27,
-	28, 29, 30, 37, 8, 7, 18, 19, 20, 21,
-	6, 5, 61, 22, 24, 23, 25, 26, 27, 28,
-	29, 66, 4, 2, 0, 18, 19, 20, 21, 0,
-	0, 60, 22, 24, 23, 25, 26, 27, 28, 29,
-	0, 0, 0, 0, 18, 19, 20, 21, 17, 0,
-	54, 0, 22, 24, 23, 25, 26, 27, 28, 29,
-	0, 0, 0, 0, 18, 19, 20, 21, 9, 10,
-	0, 0, 13, 15, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 16, 14, 0, 0, 12, 0, 0,
-	0, 11,
+	51, 52, 12, 71, 33, 53, 11, 20, 21, 32,
+	56, 57, 58, 31, 1, 30, 37, 8, 22, 24,
+	23, 25, 26, 27, 28, 29, 66, 59, 2, 7,
+	6, 5, 4, 0, 0, 67, 0, 69, 18, 19,
+	20, 21, 0, 73, 62, 22, 24, 23, 25, 26,
+	27, 28, 29, 22, 24, 23, 25, 26, 27, 28,
+	29, 0, 0, 0, 0, 18, 19, 20, 21, 0,
+	0, 61, 0, 18, 19, 20, 21, 0, 0, 60,
+	22, 24, 23, 25, 26, 27, 28, 29, 17, 0,
+	0, 0, 22, 24, 23, 25, 26, 27, 28, 29,
+	18, 19, 20, 21, 0, 0, 54, 0, 0, 0,
+	0, 0, 18, 19, 20, 21, 22, 24, 23, 25,
+	26, 27, 28, 29, 0, 9, 10, 0, 0, 13,
+	15, 0, 0, 0, 0, 0, 18, 19, 20, 21,
+	16, 14, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 12, 0, 0, 0, 11,
 }
 
 var YYPact = [...]int16{
-	-32768, 144, -32768, 122, 76, 66, 65, -32768, -32768, -32768,
-	62, 39, 39, 78, 27, 18, 7, -32768, 39, 39,
-	39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
-	-32768, -32768, -32768, 39, 102, -32768, -32768, 61, 39, 39,
-	39, 31, 31, -32768, -32768, 14, 14, 14, 14, 14,
-	14, 14, 14, -7, -32768, 39, 83, 64, 36, -7,
-	-32768, 4, 3, 144, 144, -18, 144, -19, 45, -32768,
-	-32768, -10, 144, -28, -32768,
+	-32768, 151, -32768, 112, 39, 37, 33, -32768, -32768, -32768,
+	27, 1, 1, 41, -23, -24, -25, -32768, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	-32768, -32768, -32768, 1, 100, -32768, -32768, 12, 1, 1,
+	1, 5, 5, -32768, -32768, -15, -15, -15, -15, -15,
+	-15, -15, -15, 136, -32768, 1, 73, 65, 38, 136,
+	-32768, -28, -29, 151, 151, -34, 151, -35, 15, -32768,
+	-32768, -30, 151, -36, -32768,
 }
 
 var YYPgo = [...]int8{
-	0, 0, 101, 1, 102, 91, 90, 85, 84, 70,
+	0, 0, 56, 1, 62, 61, 60, 59, 47, 44,
 }
 
 var YYR1 = [...]int8{
@@ -138,13 +155,13 @@ var YYR2 = [...]int8{
 
 var YYChk = [...]int16{
 	-32768, -9, -2, -3, -4, -5, -6, -7, -8, 4,
-	5, 27, 23, 8, 20, 9, 19, 6, 22, 23,
-	24, 25, 10, 12, 11, 13, 14, 15, 16, 17,
-	6, 6, 6, 7, -3, 5, -3, 5, 27, 27,
-	27, -3, -3, -3, -3, -3, -3, -3, -3, -3,
-	-3, -3, -3, -3, 28, 7, -3, -3, -3, -3,
-	28, 28, 28, 29, 29, -1, -2, -1, 30, -1,
-	30, 18, 29, -1, 30,
+	5, 35, 31, 8, 20, 9, 19, 6, 30, 31,
+	32, 33, 10, 12, 11, 13, 14, 15, 16, 17,
+	6, 6, 6, 7, -3, 5, -3, 5, 35, 35,
+	35, -3, -3, -3, -3, -3, -3, -3, -3, -3,
+	-3, -3, -3, -3, 36, 7, -3, -3, -3, -3,
+	36, 36, 36, 37, 37, -1, -2, -1, 38, -1,
+	38, 18, 37, -1, 38,
 }
 
 var YYDef = [...]int8{
@@ -163,7 +180,7 @@ var YYTok1 = [...]int8{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	27, 28, 24, 22, 3, 23, 3, 25, 3, 3,
+	35, 36, 32, 30, 3, 31, 3, 33, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
@@ -171,13 +188,13 @@ var YYTok1 = [...]int8{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 29, 3, 30,
+	3, 3, 3, 37, 3, 38,
 }
 
 var YYTok2 = [...]int8{
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-	26,
+	22, 23, 24, 25, 26, 27, 28, 29, 34,
 }
 
 var YYTok3 = [...]int8{
@@ -523,140 +540,140 @@ YYdefault:
 
 	case 2:
 		YYDollar = YYS[YYpt-2 : YYpt+1]
-//line parser/grammar.y:28
+//line parser/grammar.y:29
 		{
 			YYlex.(*Lexer).evalAst(YYDollar[2].Ast)
 			PrintAST(YYDollar[2].Ast, 0)
 		}
 	case 11:
 		YYDollar = YYS[YYpt-1 : YYpt+1]
-//line parser/grammar.y:46
+//line parser/grammar.y:47
 		{
 			YYVAL.Ast = &Number{YYDollar[1].String}
 		}
 	case 12:
 		YYDollar = YYS[YYpt-1 : YYpt+1]
-//line parser/grammar.y:47
+//line parser/grammar.y:48
 		{
 			YYVAL.Ast = &Variable{YYDollar[1].String}
 		}
 	case 13:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:48
+//line parser/grammar.y:49
 		{
 			YYVAL.Ast = &BinaryExpr{Op: "+", Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 14:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:49
+//line parser/grammar.y:50
 		{
 			YYVAL.Ast = &BinaryExpr{Op: "-", Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 15:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:50
+//line parser/grammar.y:51
 		{
 			YYVAL.Ast = &BinaryExpr{Op: "*", Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 16:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:51
+//line parser/grammar.y:52
 		{
 			YYVAL.Ast = &BinaryExpr{Op: "/", Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 17:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:52
+//line parser/grammar.y:53
 		{
 			YYVAL.Ast = &BinaryExpr{Op: YYDollar[2].String, Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 18:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:53
+//line parser/grammar.y:54
 		{
 			YYVAL.Ast = &BinaryExpr{Op: YYDollar[2].String, Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 19:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:54
+//line parser/grammar.y:55
 		{
 			YYVAL.Ast = &BinaryExpr{Op: YYDollar[2].String, Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 20:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:55
+//line parser/grammar.y:56
 		{
 			YYVAL.Ast = &BinaryExpr{Op: YYDollar[2].String, Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 21:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:56
+//line parser/grammar.y:57
 		{
 			YYVAL.Ast = &BinaryExpr{Op: YYDollar[2].String, Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 22:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:57
+//line parser/grammar.y:58
 		{
 			YYVAL.Ast = &BinaryExpr{Op: YYDollar[2].String, Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 23:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:58
+//line parser/grammar.y:59
 		{
 			YYVAL.Ast = &BinaryExpr{Op: YYDollar[2].String, Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 24:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:59
+//line parser/grammar.y:60
 		{
 			YYVAL.Ast = &BinaryExpr{Op: YYDollar[2].String, Lhs: YYDollar[1].Ast, Rhs: YYDollar[3].Ast}
 		}
 	case 25:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:60
+//line parser/grammar.y:61
 		{
 			YYVAL.Ast = &ParenExpr{YYDollar[2].Ast}
 		}
 	case 26:
 		YYDollar = YYS[YYpt-2 : YYpt+1]
-//line parser/grammar.y:61
+//line parser/grammar.y:62
 		{
 			YYVAL.Ast = &UnaryExpr{YYDollar[2].Ast}
 		}
 	case 27:
 		YYDollar = YYS[YYpt-4 : YYpt+1]
-//line parser/grammar.y:65
+//line parser/grammar.y:66
 		{
 			YYVAL.Ast = &Assignment{Variable: YYDollar[2].String, Expr: YYDollar[4].Ast}
 		}
 	case 28:
 		YYDollar = YYS[YYpt-3 : YYpt+1]
-//line parser/grammar.y:69
+//line parser/grammar.y:70
 		{
 			YYVAL.Ast = &Reassignment{Variable: YYDollar[1].String, Expr: YYDollar[3].Ast}
 		}
 	case 29:
 		YYDollar = YYS[YYpt-4 : YYpt+1]
-//line parser/grammar.y:73
+//line parser/grammar.y:74
 		{
 			YYVAL.Ast = &StdPrint{Expr: YYDollar[3].Ast}
 		}
 	case 30:
 		YYDollar = YYS[YYpt-7 : YYpt+1]
-//line parser/grammar.y:77
+//line parser/grammar.y:78
 		{
 			YYVAL.Ast = &IfStatement{Cond: YYDollar[3].Ast, ThenStmt: YYDollar[6].Ast, ElseStmt: nil}
 		}
 	case 31:
 		YYDollar = YYS[YYpt-11 : YYpt+1]
-//line parser/grammar.y:78
+//line parser/grammar.y:79
 		{
 			YYVAL.Ast = &IfStatement{Cond: YYDollar[3].Ast, ThenStmt: YYDollar[6].Ast, ElseStmt: YYDollar[10].Ast}
 		}
 	case 32:
 		YYDollar = YYS[YYpt-7 : YYpt+1]
-//line parser/grammar.y:82
+//line parser/grammar.y:83
 		{
 			YYVAL.Ast = &WhileStatement{Cond: YYDollar[3].Ast, Body: YYDollar[6].Ast}
 		}

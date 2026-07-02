@@ -137,6 +137,30 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 				case "while":
 					lval.String = lit
 					return tokenWhile
+				case "func":
+					lval.String = lit
+					return tokenFunc
+				case "return":
+					lval.String = lit
+					return tokenReturn
+				case "int":
+					lval.String = lit
+					return tokenTypeInt
+				case "double":
+					lval.String = lit
+					return tokenTypeDouble
+				case "bool":
+					lval.String = lit
+					return tokenTypeBool
+				case "void":
+					lval.String = lit
+					return tokenTypeVoid
+				case "true":
+					lval.String = lit
+					return tokenTrue
+				case "false":
+					lval.String = lit
+					return tokenFalse
 				default:
 					lval.String = lit
 					return tokenIdentifier
