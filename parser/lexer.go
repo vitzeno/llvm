@@ -102,9 +102,9 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 			if unicode.IsSpace(r) {
 				continue
 			} else if unicode.IsDigit(r) {
-				// backup and let lexInt rescan the beginning of the int
+				// backup and let lexNumber rescan the beginning of the number
 				l.backup()
-				digit := l.lexInt()
+				digit := l.lexNumber()
 				lval.String = digit
 				return tokenNumber
 			} else if unicode.IsLetter(r) {
@@ -204,9 +204,10 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 	}
 }
 
-// lexInt scans the input for an integer
-func (l *Lexer) lexInt() string {
+// lexNumber scans the input for an integer or decimal literal
+func (l *Lexer) lexNumber() string {
 	l.buffer.Reset()
+	seenDot := false
 	for {
 		r, _, err := l.reader.ReadRune()
 		if err != nil {
@@ -218,10 +219,13 @@ func (l *Lexer) lexInt() string {
 		}
 
 		l.pos.Col++
-		if unicode.IsDigit(r) {
+		if unicode.IsDigit(r) || (r == '.' && !seenDot) {
+			if r == '.' {
+				seenDot = true
+			}
 			l.buffer.WriteRune(r)
 		} else {
-			// over-scanned int, need to move back
+			// over-scanned number, need to move back
 			l.backup()
 			return l.buffer.String()
 		}
