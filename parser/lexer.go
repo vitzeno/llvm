@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"unicode"
-
-	"github.com/llir/llvm/ir"
 )
 
 // Position tracks the position of the lexer
@@ -16,41 +14,36 @@ type Position struct {
 	Col  int
 }
 
-type variable struct {
-	location *ir.InstAlloca
-	value    float64
-}
-
 // Lexer is the lexer struct
 type Lexer struct {
-	rootAst    Ast
-	pos        Position
-	variables  map[string]variable
-	evalFailed bool
-	reader     *bufio.Reader
-	errors     []Diagnostic
-	buffer     bytes.Buffer // Buffer to store tokens temporarily
+	rootAst Ast
+	pos     Position
+	reader  *bufio.Reader
+	errors  []Diagnostic
+	buffer  bytes.Buffer // Buffer to store tokens temporarily
 }
 
 // NewLexer creates a new lexer
 func NewLexer(reader io.Reader) *Lexer {
 	return &Lexer{
-		pos:       Position{Line: 1, Col: 0},
-		variables: make(map[string]variable),
-		rootAst:   nil,
-		reader:    bufio.NewReader(reader),
+		pos:     Position{Line: 1, Col: 0},
+		rootAst: nil,
+		reader:  bufio.NewReader(reader),
 	}
+}
+
+// Root returns the AST built during parsing, valid after a successful YYParse
+func (l *Lexer) Root() Ast {
+	return l.rootAst
 }
 
 // Error is the error handler for the lexer
 func (l *Lexer) Error(e string) {
-	//l.errors = append(l.errors, fmt.Sprintf("%s Line: %d, Col: %d", e, l.pos.line, l.pos.col))
 	l.errors = append(l.errors, Diagnostic{
 		Position: Position{Line: l.pos.Line, Col: l.pos.Col},
 		Message:  e,
 		Severity: Error,
 	})
-	l.evalFailed = true
 }
 
 // Errors returns the errors

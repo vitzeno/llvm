@@ -5,18 +5,20 @@ package parser
 
 %union{
 String string
-Ast Ast 
+Ast Ast
 }
 
 %token<String> NUMBER IDENTIFIER SEPARATOR ASSIGN LET IF LT LTE GT GTE EQ NE OR AND ELSE WHILE PRINT
 %token FUNC RETURN TYPE_INT TYPE_DOUBLE TYPE_BOOL TYPE_VOID TRUE FALSE
 
-%type <Ast> statements statement expression assignment reassignment print control_flow while_statement
+%type <Ast> program statements statement expression assignment reassignment print control_flow while_statement
 
 %nonassoc NO_ELSE
 %nonassoc ELSE
 %right ASSIGN
-%left LT GT LTE GTE EQ NE OR AND
+%left OR
+%left AND
+%left LT GT LTE GTE EQ NE
 %left '+' '-'
 %left '*' '/'
 %right UMINUS
@@ -25,8 +27,8 @@ Ast Ast
 %start program
 
 %%
-program :  /* empty */
-     | program statement { YYlex.(*Lexer).evalAst($2); PrintAST($2, 0)} // replace this with a call to codegen for code generation
+program :  /* empty */ { root := &Block{}; $$ = root; YYlex.(*Lexer).rootAst = root }
+     | program statement { blk := $1.(*Block); blk.Stmts = append(blk.Stmts, $2); $$ = blk }
      ;
 
 statement:
@@ -39,8 +41,8 @@ statement:
      ;
 
 statements:
-     statement statements
-     | statement
+     statement statements { blk := $2.(*Block); blk.Stmts = append([]Ast{$1}, blk.Stmts...); $$ = blk }
+     | statement { $$ = &Block{Stmts: []Ast{$1}} }
      ;
 
 expression:
@@ -50,18 +52,18 @@ expression:
     | expression '-' expression { $$ = &BinaryExpr{Op: "-", Lhs: $1, Rhs: $3} }
     | expression '*' expression { $$ = &BinaryExpr{Op: "*", Lhs: $1, Rhs: $3} }
     | expression '/' expression { $$ = &BinaryExpr{Op: "/", Lhs: $1, Rhs: $3} }
-    | expression LT expression { $$ = &BinaryExpr{Op: $2, Lhs: $1, Rhs: $3} }
-    | expression GT expression { $$ = &BinaryExpr{Op: $2, Lhs: $1, Rhs: $3} }
-    | expression LTE expression { $$ = &BinaryExpr{Op: $2, Lhs: $1, Rhs: $3} }
-    | expression GTE expression { $$ = &BinaryExpr{Op: $2, Lhs: $1, Rhs: $3} }
-    | expression EQ expression { $$ = &BinaryExpr{Op: $2, Lhs: $1, Rhs: $3} }
-    | expression NE expression { $$ = &BinaryExpr{Op: $2, Lhs: $1, Rhs: $3} }
-    | expression OR expression { $$ = &BinaryExpr{Op: $2, Lhs: $1, Rhs: $3} }
-    | expression AND expression { $$ = &BinaryExpr{Op: $2, Lhs: $1, Rhs: $3} }
+    | expression LT expression { $$ = &BinaryExpr{Op: "<", Lhs: $1, Rhs: $3} }
+    | expression GT expression { $$ = &BinaryExpr{Op: ">", Lhs: $1, Rhs: $3} }
+    | expression LTE expression { $$ = &BinaryExpr{Op: "<=", Lhs: $1, Rhs: $3} }
+    | expression GTE expression { $$ = &BinaryExpr{Op: ">=", Lhs: $1, Rhs: $3} }
+    | expression EQ expression { $$ = &BinaryExpr{Op: "==", Lhs: $1, Rhs: $3} }
+    | expression NE expression { $$ = &BinaryExpr{Op: "!=", Lhs: $1, Rhs: $3} }
+    | expression OR expression { $$ = &BinaryExpr{Op: "||", Lhs: $1, Rhs: $3} }
+    | expression AND expression { $$ = &BinaryExpr{Op: "&&", Lhs: $1, Rhs: $3} }
     | '(' expression ')'  { $$ = &ParenExpr{$2} }
     | '-' expression %prec UMINUS { $$ = &UnaryExpr{$2} }
     ;
-    
+
 assignment:
      LET IDENTIFIER ASSIGN expression { $$ = &Assignment{Variable: $2, Expr: $4} }
      ;
@@ -81,5 +83,6 @@ control_flow:
 
 while_statement:
      WHILE '(' expression ')' '{' statements '}' { $$ = &WhileStatement{Cond: $3, Body: $6} }
+     ;
 
 %%
