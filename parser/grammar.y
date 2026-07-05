@@ -6,12 +6,14 @@ package parser
 %union{
 String string
 Ast Ast
+Type Type
 }
 
 %token<String> NUMBER IDENTIFIER SEPARATOR ASSIGN LET IF LT LTE GT GTE EQ NE OR AND ELSE WHILE PRINT
 %token FUNC RETURN TYPE_INT TYPE_DOUBLE TYPE_BOOL TYPE_VOID TRUE FALSE
 
 %type <Ast> program statements statement expression assignment reassignment print control_flow while_statement
+%type <Type> type_name
 
 %nonassoc NO_ELSE
 %nonassoc ELSE
@@ -46,7 +48,9 @@ statements:
      ;
 
 expression:
-     NUMBER { $$ = &Number{$1} }
+     NUMBER { $$ = newNumber($1) }
+    | TRUE { $$ = &BoolLit{Value: true} }
+    | FALSE { $$ = &BoolLit{Value: false} }
     | IDENTIFIER { $$ = &Variable{$1} }
     | expression '+' expression { $$ = &BinaryExpr{Op: "+", Lhs: $1, Rhs: $3} }
     | expression '-' expression { $$ = &BinaryExpr{Op: "-", Lhs: $1, Rhs: $3} }
@@ -64,8 +68,14 @@ expression:
     | '-' expression %prec UMINUS { $$ = &UnaryExpr{$2} }
     ;
 
+type_name:
+     TYPE_INT { $$ = TypeInt }
+     | TYPE_DOUBLE { $$ = TypeDouble }
+     | TYPE_BOOL { $$ = TypeBool }
+     ;
+
 assignment:
-     LET IDENTIFIER ASSIGN expression { $$ = &Assignment{Variable: $2, Expr: $4} }
+     LET IDENTIFIER ':' type_name ASSIGN expression { $$ = &Assignment{Variable: $2, Type: $4, Expr: $6} }
      ;
 
 reassignment:

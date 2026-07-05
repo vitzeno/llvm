@@ -1,0 +1,5 @@
+let a: int = 4;
+let b: double = 1.5;
+let c: bool = a <= 4 && b >= 1.0 || a != 5;
+let d: bool = a NE 3 OR a > 1 AND true;
+print(c);

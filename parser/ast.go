@@ -7,6 +7,32 @@ import (
 
 type Ast any
 
+// Type is the static type of an expression or declaration
+type Type int
+
+const (
+	TypeUnknown Type = iota
+	TypeInt
+	TypeDouble
+	TypeBool
+	TypeVoid
+)
+
+func (t Type) String() string {
+	switch t {
+	case TypeInt:
+		return "int"
+	case TypeDouble:
+		return "double"
+	case TypeBool:
+		return "bool"
+	case TypeVoid:
+		return "void"
+	default:
+		return "unknown"
+	}
+}
+
 // Block is an ordered list of statements: the whole program or the body of
 // an if/else/while
 type Block struct {
@@ -32,11 +58,23 @@ type Variable struct {
 }
 
 type Number struct {
-	Value string
+	Value   string
+	IsFloat bool
+}
+
+// newNumber builds a Number literal, classifying it as int or double
+// based on the presence of a decimal point in the source text
+func newNumber(text string) *Number {
+	return &Number{Value: text, IsFloat: strings.Contains(text, ".")}
+}
+
+type BoolLit struct {
+	Value bool
 }
 
 type Assignment struct {
 	Variable string
+	Type     Type
 	Expr     Ast
 }
 
@@ -82,8 +120,10 @@ func PrintAST(a Ast, indentLevel int) {
 		fmt.Printf("%sVariable(%s)\n", indent, e.Name)
 	case *Number:
 		fmt.Printf("%sNumber(%s)\n", indent, e.Value)
+	case *BoolLit:
+		fmt.Printf("%sBoolLit(%t)\n", indent, e.Value)
 	case *Assignment:
-		fmt.Printf("%sAssignment(%s)\n", indent, e.Variable)
+		fmt.Printf("%sAssignment(%s: %s)\n", indent, e.Variable, e.Type)
 		PrintAST(e.Expr, indentLevel+1)
 	case *Reassignment:
 		fmt.Printf("%sReassignment(%s)\n", indent, e.Variable)

@@ -1,7 +1,7 @@
-let a = 4;
-let b = 5;
+let a: int = 4;
+let b: int = 5;
 b = b + 1;
 
-let c = 4;
-let d = 5;
-let e = a * ((b / c) - d);
+let c: int = 4;
+let d: int = 5;
+let e: int = a * ((b / c) - d);
