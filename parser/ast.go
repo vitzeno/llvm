@@ -33,8 +33,8 @@ func (t Type) String() string {
 	}
 }
 
-// Block is an ordered list of statements: the whole program or the body of
-// an if/else/while
+// Block is an ordered list of statements: the whole program, a function
+// body, or the body of an if/else/while
 type Block struct {
 	Stmts []Ast
 }
@@ -98,6 +98,27 @@ type WhileStatement struct {
 	Body Ast
 }
 
+type Param struct {
+	Name string
+	Type Type
+}
+
+type FuncDecl struct {
+	Name       string
+	Params     []Param
+	ReturnType Type
+	Body       Ast
+}
+
+type ReturnStmt struct {
+	Expr Ast // nil for a bare "return;"
+}
+
+type CallExpr struct {
+	Name string
+	Args []Ast
+}
+
 // PrintAST prints the AST starting from the given node
 func PrintAST(a Ast, indentLevel int) {
 	indent := strings.Repeat("\t", indentLevel)
@@ -144,6 +165,23 @@ func PrintAST(a Ast, indentLevel int) {
 		fmt.Printf("%sWhileStatement\n", indent)
 		PrintAST(e.Cond, indentLevel+1)
 		PrintAST(e.Body, indentLevel+1)
+	case *FuncDecl:
+		params := make([]string, len(e.Params))
+		for i, p := range e.Params {
+			params[i] = fmt.Sprintf("%s: %s", p.Name, p.Type)
+		}
+		fmt.Printf("%sFuncDecl(%s(%s): %s)\n", indent, e.Name, strings.Join(params, ", "), e.ReturnType)
+		PrintAST(e.Body, indentLevel+1)
+	case *ReturnStmt:
+		fmt.Printf("%sReturn\n", indent)
+		if e.Expr != nil {
+			PrintAST(e.Expr, indentLevel+1)
+		}
+	case *CallExpr:
+		fmt.Printf("%sCall(%s)\n", indent, e.Name)
+		for _, arg := range e.Args {
+			PrintAST(arg, indentLevel+1)
+		}
 	default:
 		fmt.Println("Unknown node type")
 	}

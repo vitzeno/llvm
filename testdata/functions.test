@@ -1,0 +1,11 @@
+func add(a: int, b: int): int {
+    return a + b;
+}
+
+func show(x: double): void {
+    print(x);
+}
+
+let r: int = add(2, 3);
+print(r);
+show(1.5);

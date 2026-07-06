@@ -6,14 +6,18 @@ package parser
 %union{
 String string
 Ast Ast
+Asts []Ast
+Params []Param
 Type Type
 }
 
 %token<String> NUMBER IDENTIFIER SEPARATOR ASSIGN LET IF LT LTE GT GTE EQ NE OR AND ELSE WHILE PRINT
 %token FUNC RETURN TYPE_INT TYPE_DOUBLE TYPE_BOOL TYPE_VOID TRUE FALSE
 
-%type <Ast> program statements statement expression assignment reassignment print control_flow while_statement
-%type <Type> type_name
+%type <Ast> program statements statement expression assignment reassignment print control_flow while_statement func_decl return_stmt
+%type <Asts> args arg_list
+%type <Params> params param_list
+%type <Type> type_name return_type
 
 %nonassoc NO_ELSE
 %nonassoc ELSE
@@ -31,6 +35,7 @@ Type Type
 %%
 program :  /* empty */ { root := &Block{}; $$ = root; YYlex.(*Lexer).rootAst = root }
      | program statement { blk := $1.(*Block); blk.Stmts = append(blk.Stmts, $2); $$ = blk }
+     | program func_decl { blk := $1.(*Block); blk.Stmts = append(blk.Stmts, $2); $$ = blk }
      ;
 
 statement:
@@ -38,6 +43,7 @@ statement:
      | assignment SEPARATOR
      | reassignment SEPARATOR
      | print SEPARATOR
+     | return_stmt SEPARATOR
      | control_flow
      | while_statement
      ;
@@ -52,6 +58,7 @@ expression:
     | TRUE { $$ = &BoolLit{Value: true} }
     | FALSE { $$ = &BoolLit{Value: false} }
     | IDENTIFIER { $$ = &Variable{$1} }
+    | IDENTIFIER '(' args ')' { $$ = &CallExpr{Name: $1, Args: $3} }
     | expression '+' expression { $$ = &BinaryExpr{Op: "+", Lhs: $1, Rhs: $3} }
     | expression '-' expression { $$ = &BinaryExpr{Op: "-", Lhs: $1, Rhs: $3} }
     | expression '*' expression { $$ = &BinaryExpr{Op: "*", Lhs: $1, Rhs: $3} }
@@ -74,6 +81,11 @@ type_name:
      | TYPE_BOOL { $$ = TypeBool }
      ;
 
+return_type:
+     type_name { $$ = $1 }
+     | TYPE_VOID { $$ = TypeVoid }
+     ;
+
 assignment:
      LET IDENTIFIER ':' type_name ASSIGN expression { $$ = &Assignment{Variable: $2, Type: $4, Expr: $6} }
      ;
@@ -93,6 +105,35 @@ control_flow:
 
 while_statement:
      WHILE '(' expression ')' '{' statements '}' { $$ = &WhileStatement{Cond: $3, Body: $6} }
+     ;
+
+func_decl:
+     FUNC IDENTIFIER '(' params ')' ':' return_type '{' statements '}' { $$ = &FuncDecl{Name: $2, Params: $4, ReturnType: $7, Body: $9} }
+     ;
+
+params:
+     /* empty */ { $$ = nil }
+     | param_list
+     ;
+
+param_list:
+     IDENTIFIER ':' type_name { $$ = []Param{{Name: $1, Type: $3}} }
+     | param_list ',' IDENTIFIER ':' type_name { $$ = append($1, Param{Name: $3, Type: $5}) }
+     ;
+
+return_stmt:
+     RETURN expression { $$ = &ReturnStmt{Expr: $2} }
+     | RETURN { $$ = &ReturnStmt{} }
+     ;
+
+args:
+     /* empty */ { $$ = nil }
+     | arg_list
+     ;
+
+arg_list:
+     expression { $$ = []Ast{$1} }
+     | arg_list ',' expression { $$ = append($1, $3) }
      ;
 
 %%
