@@ -166,6 +166,12 @@ func (g *Generator) genStmt(a parser.Ast) {
 	case *parser.StdPrint:
 		g.genPrint(e)
 
+	case *parser.IfStatement:
+		g.genIf(e)
+
+	case *parser.WhileStatement:
+		g.genWhile(e)
+
 	default:
 		// a bare expression statement, evaluated for its side effects
 		g.genExpr(a)
@@ -189,6 +195,64 @@ func (g *Generator) genPrint(e *parser.StdPrint) {
 	zero := constant.NewInt(types.I32, 0)
 	ptr := g.block.NewGetElementPtr(fmtStr.ContentType, fmtStr, zero, zero)
 	g.block.NewCall(g.printf, ptr, v)
+}
+
+func (g *Generator) genIf(e *parser.IfStatement) {
+	cond, _ := g.genExpr(e.Cond)
+
+	id := g.nextID()
+	thenB := g.fn.NewBlock(fmt.Sprintf("if.then.%d", id))
+	var elseB *ir.Block
+	if e.ElseStmt != nil {
+		elseB = g.fn.NewBlock(fmt.Sprintf("if.else.%d", id))
+	}
+	mergeB := g.fn.NewBlock(fmt.Sprintf("if.end.%d", id))
+
+	// without an else the false edge falls through to the merge block
+	falseTarget := mergeB
+	if elseB != nil {
+		falseTarget = elseB
+	}
+	g.block.NewCondBr(cond, thenB, falseTarget)
+
+	g.block = thenB
+	g.genStmt(e.ThenStmt)
+	if g.block.Term == nil {
+		g.block.NewBr(mergeB)
+	}
+
+	if elseB != nil {
+		g.block = elseB
+		g.genStmt(e.ElseStmt)
+		if g.block.Term == nil {
+			g.block.NewBr(mergeB)
+		}
+	}
+
+	g.block = mergeB
+}
+
+func (g *Generator) genWhile(e *parser.WhileStatement) {
+	id := g.nextID()
+	condB := g.fn.NewBlock(fmt.Sprintf("while.cond.%d", id))
+	bodyB := g.fn.NewBlock(fmt.Sprintf("while.body.%d", id))
+	endB := g.fn.NewBlock(fmt.Sprintf("while.end.%d", id))
+
+	g.block.NewBr(condB)
+
+	// the condition is emitted inside the loop header so the backedge
+	// re-evaluates it on every iteration
+	g.block = condB
+	cond, _ := g.genExpr(e.Cond)
+	g.block.NewCondBr(cond, bodyB, endB)
+
+	g.block = bodyB
+	g.genStmt(e.Body)
+	if g.block.Term == nil {
+		g.block.NewBr(condB)
+	}
+
+	g.block = endB
 }
 
 func (g *Generator) genExpr(a parser.Ast) (value.Value, parser.Type) {
