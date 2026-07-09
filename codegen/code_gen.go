@@ -28,9 +28,13 @@ type Generator struct {
 	module *ir.Module
 	printf *ir.Func
 
-	fn     *ir.Func
-	block  *ir.Block
-	scopes []map[string]varSlot
+	functions map[string]*ir.Func
+	sigs      map[string]parser.FuncSig
+
+	fn            *ir.Func
+	block         *ir.Block
+	currentReturn parser.Type
+	scopes        []map[string]varSlot
 
 	fmtInt    *ir.Global // "%d\n" for int and bool
 	fmtDouble *ir.Global // "%g\n" for double
@@ -40,11 +44,15 @@ type Generator struct {
 
 // New creates an empty Generator
 func New() *Generator {
-	return &Generator{}
+	return &Generator{
+		functions: make(map[string]*ir.Func),
+		sigs:      make(map[string]parser.FuncSig),
+	}
 }
 
 // Generate lowers a whole program. Top-level statements become the body of
-// an implicit main function.
+// an implicit main function; function declarations become their own LLVM
+// functions and are pre-declared so call order does not matter.
 func (g *Generator) Generate(root parser.Ast) (m *ir.Module, err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -75,14 +83,23 @@ func (g *Generator) Generate(root parser.Ast) (m *ir.Module, err error) {
 	g.fmtInt = g.newFmtString(".fmt.int", "%d\n\x00")
 	g.fmtDouble = g.newFmtString(".fmt.double", "%g\n\x00")
 
+	// declare every function up front so calls resolve regardless of
+	// declaration order
+	for _, stmt := range block.Stmts {
+		if fn, ok := stmt.(*parser.FuncDecl); ok {
+			g.declareFunc(fn)
+		}
+	}
+
 	// top-level statements form the body of main
 	mainFn := g.module.NewFunc("main", types.I32)
 	g.fn = mainFn
 	g.block = mainFn.NewBlock("entry")
+	g.currentReturn = parser.TypeUnknown
 	g.scopes = []map[string]varSlot{make(map[string]varSlot)}
 	for _, stmt := range block.Stmts {
 		if _, ok := stmt.(*parser.FuncDecl); ok {
-			panic("function code generation not implemented yet")
+			continue
 		}
 		if g.block.Term != nil {
 			break
@@ -93,6 +110,12 @@ func (g *Generator) Generate(root parser.Ast) (m *ir.Module, err error) {
 		g.block.NewRet(constant.NewInt(types.I32, 0))
 	}
 
+	for _, stmt := range block.Stmts {
+		if fn, ok := stmt.(*parser.FuncDecl); ok {
+			g.genFunc(fn)
+		}
+	}
+
 	return g.module, nil
 }
 
@@ -100,6 +123,52 @@ func (g *Generator) newFmtString(name, contents string) *ir.Global {
 	global := g.module.NewGlobalDef(name, constant.NewCharArrayFromString(contents))
 	global.Immutable = true
 	return global
+}
+
+func (g *Generator) declareFunc(decl *parser.FuncDecl) {
+	params := make([]*ir.Param, len(decl.Params))
+	sigParams := make([]parser.Type, len(decl.Params))
+	for i, p := range decl.Params {
+		params[i] = ir.NewParam(p.Name, irType(p.Type))
+		sigParams[i] = p.Type
+	}
+	fn := g.module.NewFunc(decl.Name, irType(decl.ReturnType), params...)
+	g.functions[decl.Name] = fn
+	g.sigs[decl.Name] = parser.FuncSig{Params: sigParams, Return: decl.ReturnType}
+}
+
+func (g *Generator) genFunc(decl *parser.FuncDecl) {
+	fn := g.functions[decl.Name]
+	g.fn = fn
+	g.block = fn.NewBlock("entry")
+	g.currentReturn = decl.ReturnType
+	// a function sees only its own parameters and locals
+	g.scopes = []map[string]varSlot{make(map[string]varSlot)}
+
+	for i, p := range decl.Params {
+		slot := g.block.NewAlloca(irType(p.Type))
+		slot.SetName(fmt.Sprintf("%s.addr", p.Name))
+		g.block.NewStore(fn.Params[i], slot)
+		g.declare(p.Name, varSlot{alloca: slot, typ: p.Type})
+	}
+
+	body := decl.Body.(*parser.Block)
+	for _, stmt := range body.Stmts {
+		if g.block.Term != nil {
+			break
+		}
+		g.genStmt(stmt)
+	}
+
+	if g.block.Term == nil {
+		if decl.ReturnType == parser.TypeVoid {
+			g.block.NewRet(nil)
+		} else {
+			// the checker proved every path returns, so an open block
+			// here can only be an unreachable merge block
+			g.block.NewUnreachable()
+		}
+	}
 }
 
 func (g *Generator) pushScope() {
@@ -171,6 +240,15 @@ func (g *Generator) genStmt(a parser.Ast) {
 
 	case *parser.WhileStatement:
 		g.genWhile(e)
+
+	case *parser.ReturnStmt:
+		if e.Expr == nil {
+			g.block.NewRet(nil)
+			return
+		}
+		v, t := g.genExpr(e.Expr)
+		v = g.coerce(v, t, g.currentReturn)
+		g.block.NewRet(v)
 
 	default:
 		// a bare expression statement, evaluated for its side effects
@@ -290,6 +368,16 @@ func (g *Generator) genExpr(a parser.Ast) (value.Value, parser.Type) {
 
 	case *parser.BinaryExpr:
 		return g.genBinaryExpr(e)
+
+	case *parser.CallExpr:
+		fn := g.functions[e.Name]
+		sig := g.sigs[e.Name]
+		args := make([]value.Value, len(e.Args))
+		for i, arg := range e.Args {
+			v, t := g.genExpr(arg)
+			args[i] = g.coerce(v, t, sig.Params[i])
+		}
+		return g.block.NewCall(fn, args...), sig.Return
 
 	default:
 		panic(fmt.Sprintf("internal error: unknown expression node %T", a))
