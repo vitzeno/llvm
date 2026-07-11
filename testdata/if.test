@@ -1,4 +1,4 @@
-let a = 4;
+let a: int = 4;
 
 if (a < 2) {
     a * 3;
@@ -8,19 +8,15 @@ if (a == 3) {
     a * 3;
 }
 
-if (a NE 2) {
+if (a != 2) {
     a * 3;
 }
 
-if ((a OR 2) AND 3) {
-    a * 3;
-}   
-
-if (a OR 4) {
+if ((a > 1 || a < 0) && a <= 10) {
     a * 3;
 }
 
-if (a > 2) {
+if (a >= 4) {
     a * 3;
 } else {
     a * 2;

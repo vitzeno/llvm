@@ -42,17 +42,32 @@ func (suite *TestSuite) TestParser() {
 			inputPath: "../testdata/print.test",
 			expected:  0,
 		},
+		{
+			name:      "operators",
+			inputPath: "../testdata/operators.test",
+			expected:  0,
+		},
+		{
+			name:      "functions",
+			inputPath: "../testdata/functions.test",
+			expected:  0,
+		},
 	} {
 		suite.T().Run(tc.name, func(t *testing.T) {
-			//InitCodeGen()
 			file, err := os.Open(tc.inputPath)
 			if err != nil {
-				panic(err)
+				t.Fatal(err)
 			}
+			defer file.Close()
 
 			lexer := NewLexer(file)
 			output := YYParse(lexer)
 			suite.Assert().Equal(tc.expected, output)
+			suite.Assert().Empty(lexer.Errors())
+
+			root, ok := lexer.Root().(*Block)
+			suite.Assert().True(ok, "root AST should be a *Block")
+			suite.Assert().NotEmpty(root.Stmts)
 		})
 	}
 }

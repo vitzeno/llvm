@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"unicode"
-
-	"github.com/llir/llvm/ir"
 )
 
 // Position tracks the position of the lexer
@@ -16,41 +14,36 @@ type Position struct {
 	Col  int
 }
 
-type varible struct {
-	location *ir.InstAlloca
-	value    float64
-}
-
 // Lexer is the lexer struct
 type Lexer struct {
-	rootAst    Ast
-	pos        Position
-	variables  map[string]varible
-	evalFailed bool
-	reader     *bufio.Reader
-	errors     []Diagnostic
-	buffer     bytes.Buffer // Buffer to store tokens temporarily
+	rootAst Ast
+	pos     Position
+	reader  *bufio.Reader
+	errors  []Diagnostic
+	buffer  bytes.Buffer // Buffer to store tokens temporarily
 }
 
 // NewLexer creates a new lexer
 func NewLexer(reader io.Reader) *Lexer {
 	return &Lexer{
-		pos:       Position{Line: 1, Col: 0},
-		variables: make(map[string]varible),
-		rootAst:   nil,
-		reader:    bufio.NewReader(reader),
+		pos:     Position{Line: 1, Col: 0},
+		rootAst: nil,
+		reader:  bufio.NewReader(reader),
 	}
+}
+
+// Root returns the AST built during parsing, valid after a successful YYParse
+func (l *Lexer) Root() Ast {
+	return l.rootAst
 }
 
 // Error is the error handler for the lexer
 func (l *Lexer) Error(e string) {
-	//l.errors = append(l.errors, fmt.Sprintf("%s Line: %d, Col: %d", e, l.pos.line, l.pos.col))
 	l.errors = append(l.errors, Diagnostic{
 		Position: Position{Line: l.pos.Line, Col: l.pos.Col},
 		Message:  e,
 		Severity: Error,
 	})
-	l.evalFailed = true
 }
 
 // Errors returns the errors
@@ -76,31 +69,35 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 			l.resetPosition()
 		case ';':
 			return tokenSeparator
-		// case '<':
-		// // potential issues cause by rune over-scanning and backup
-		// 	nextRune, _, _ := l.reader.ReadRune()
-		// 	if nextRune == '=' {
-		// 		fmt.Println("less than or equal")
-		// 		return tokenLte
-		// 	}
-		// 	l.backup()
-		// 	fmt.Println("less than")
-		// 	return tokenLt
-		// case '>':
-		// // potential issues cause by rune over-scanning and backup
-		// 	nextRune, _, _ := l.reader.ReadRune()
-		// 	if nextRune == '=' {
-		// 		return tokenGte
-		// 	}
-		// 	l.backup()
-		// 	return tokenGt
+		case '&':
+			next, _, err := l.reader.ReadRune()
+			if err == nil && next == '&' {
+				l.pos.Col++
+				lval.String = "&&"
+				return tokenAnd
+			}
+			if err == nil {
+				l.backup()
+			}
+			l.Error("unexpected character '&'")
+		case '!':
+			next, _, err := l.reader.ReadRune()
+			if err == nil && next == '=' {
+				l.pos.Col++
+				lval.String = "!="
+				return tokenNe
+			}
+			if err == nil {
+				l.backup()
+			}
+			l.Error("unexpected character '!'")
 		default:
 			if unicode.IsSpace(r) {
 				continue
 			} else if unicode.IsDigit(r) {
-				// backup and let lexInt rescan the beginning of the int
+				// backup and let lexNumber rescan the beginning of the number
 				l.backup()
-				digit := l.lexInt()
+				digit := l.lexNumber()
 				lval.String = digit
 				return tokenNumber
 			} else if unicode.IsLetter(r) {
@@ -118,9 +115,6 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 				case "if":
 					lval.String = lit
 					return tokenIf
-				case "then":
-					lval.String = lit
-					return tokenThen
 				case "else":
 					lval.String = lit
 					return tokenElse
@@ -136,6 +130,30 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 				case "while":
 					lval.String = lit
 					return tokenWhile
+				case "func":
+					lval.String = lit
+					return tokenFunc
+				case "return":
+					lval.String = lit
+					return tokenReturn
+				case "int":
+					lval.String = lit
+					return tokenTypeInt
+				case "double":
+					lval.String = lit
+					return tokenTypeDouble
+				case "bool":
+					lval.String = lit
+					return tokenTypeBool
+				case "void":
+					lval.String = lit
+					return tokenTypeVoid
+				case "true":
+					lval.String = lit
+					return tokenTrue
+				case "false":
+					lval.String = lit
+					return tokenFalse
 				default:
 					lval.String = lit
 					return tokenIdentifier
@@ -157,9 +175,20 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 				case ">":
 					lval.String = symbol
 					return tokenGt
+				case "<=":
+					lval.String = symbol
+					return tokenLte
+				case ">=":
+					lval.String = symbol
+					return tokenGte
 				case "==":
 					lval.String = symbol
 					return tokenEq
+				case "||":
+					lval.String = symbol
+					return tokenOr
+				default:
+					l.Error(fmt.Sprintf("unexpected operator %q", symbol))
 				}
 			} else {
 				return int(r)
@@ -168,9 +197,10 @@ func (l *Lexer) Lex(lval *YYSymType) int {
 	}
 }
 
-// lexInt scans the input for an integer
-func (l *Lexer) lexInt() string {
+// lexNumber scans the input for an integer or decimal literal
+func (l *Lexer) lexNumber() string {
 	l.buffer.Reset()
+	seenDot := false
 	for {
 		r, _, err := l.reader.ReadRune()
 		if err != nil {
@@ -182,10 +212,13 @@ func (l *Lexer) lexInt() string {
 		}
 
 		l.pos.Col++
-		if unicode.IsDigit(r) {
+		if unicode.IsDigit(r) || (r == '.' && !seenDot) {
+			if r == '.' {
+				seenDot = true
+			}
 			l.buffer.WriteRune(r)
 		} else {
-			// over-scanned int, need to move back
+			// over-scanned number, need to move back
 			l.backup()
 			return l.buffer.String()
 		}

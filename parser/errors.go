@@ -10,7 +10,8 @@ type Diagnostic struct {
 }
 
 // Severity is the severity of the diagnostic message
-type Severity int // 1: Error, 2: Warning, 3: Information, 4: Hint
+type Severity int
+
 const (
 	Error       Severity = 1
 	Warning     Severity = 2
@@ -18,6 +19,24 @@ const (
 	Hint        Severity = 4
 )
 
+func (s Severity) String() string {
+	switch s {
+	case Error:
+		return "error"
+	case Warning:
+		return "warning"
+	case Information:
+		return "info"
+	case Hint:
+		return "hint"
+	default:
+		return "unknown"
+	}
+}
+
 func (d *Diagnostic) String() string {
-	return fmt.Sprintf("%d Line: %d, Col: %d, %s", d.Severity, d.Line, d.Col, d.Message)
+	if d.Line == 0 {
+		return fmt.Sprintf("%s: %s", d.Severity, d.Message)
+	}
+	return fmt.Sprintf("%s Line: %d, Col: %d: %s", d.Severity, d.Line, d.Col, d.Message)
 }

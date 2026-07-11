@@ -1,14 +1,23 @@
-let a = 5;
-let b = 5;
+func square(x: int): int {
+    return x * x;
+}
 
-if (a + b  < 12) {
+let a: int = 5;
+let b: int = 5;
+
+if (a + b < 12) {
     print(a);
 } else {
     print(25);
 }
 
-let c = 0;
+let c: int = 0;
 
 while (c < 10) {
-    c = a + b;
+    c = c + a;
 }
+print(c);
+print(square(c));
+
+let ratio: double = c / 4.0;
+print(ratio);
