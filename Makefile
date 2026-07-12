@@ -5,10 +5,16 @@ parser-gen:
 	@echo "Done."
 
 run:
-	@go run main.go -in=asm/mock
+	@go run main.go -in=asm/mock -print-ast
 
-clang:
-	@clang asm/mock.ll -o asm/mock.out
+emit:
+	@go run main.go -in=asm/mock -emit-llvm -o asm/mock.ll
+
+lli: emit
+	@lli asm/mock.ll
+
+clang: emit
+	@clang -Wno-override-module asm/mock.ll -o asm/mock.out
 
 run-bin:
 	@./asm/mock.out
